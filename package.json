@@ -1,0 +1,52 @@
+{
+  "name": "react-carousel",
+  "version": "1.0.0",
+  "main": "lib/index.js",
+  "files": [
+    "lib/index.js",
+    "README.md",
+    "CHANGES.md",
+    "LICENSE"
+  ],
+  "license": "MIT",
+  "scripts": {
+    "dev": "webpack-dev-server --env.NODE_ENV=development --config ./config/webpack.config.ts --hot",
+    "build:run": "webpack --env.NODE_ENV=production --config ./config/webpack.config.ts",
+    "build": "npm run test && npm run build:run",
+    "test": "npm run lint && npm run test:jest",
+    "test:jest": "jest --config ./config/jest.config.json",
+    "lint": "npm run lint:ts",
+    "lint:ts": "tslint --config ./config/tslint.json 'src/**/*.{ts,tsx}'",
+    "fix:ts": "tslint --config ./config/tslint.json 'src/**/*.{ts,tsx}' --fix"
+  },
+  "dependencies": {
+    "@blueprintjs/core": "^1.35.2",
+    "react": "^16.2.0",
+    "react-addons-css-transition-group": "^15.6.2",
+    "react-dom": "^16.2.0",
+    "tocca": "^2.0.3"
+  },
+  "devDependencies": {
+    "@types/jest": "^22.1.1",
+    "@types/react": "^16.0.34",
+    "@types/react-dom": "^16.0.3",
+    "@types/webpack": "^3.8.2",
+    "babel-core": "^6.26.0",
+    "clean-webpack-plugin": "^0.1.18",
+    "css-loader": "^0.28.9",
+    "file-loader": "^1.1.6",
+    "jest": "^22.1.4",
+    "raw-loader": "^0.5.1",
+    "source-map-loader": "^0.2.3",
+    "style-loader": "^0.19.1",
+    "ts-loader": "^3.2.0",
+    "ts-node": "^4.1.0",
+    "tslint": "^5.9.1",
+    "tslint-react": "^3.4.0",
+    "typescript": "^2.6.2",
+    "uglifyjs-webpack-plugin": "^1.1.6",
+    "webpack": "^3.10.0",
+    "webpack-bundle-analyzer": "^2.9.2",
+    "webpack-dev-server": "^2.11.1"
+  }
+}
