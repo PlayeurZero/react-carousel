@@ -3,11 +3,15 @@ import Slide from '../Slide'
 
 import { classConcat } from '../../../../libraries/utils'
 
+declare const Hammer: (...args: any[]) => void
+
 interface IProps {
   transitionDuration?: number
   hideArrows?: boolean
   hideDots?: boolean
-  children: Array<React.ReactElement<any>>
+  ratio?: number
+  noTouch?: boolean
+  children: Array<React.ReactElement<any>> | React.ReactElement<any>
 }
 
 interface IState {
@@ -20,14 +24,18 @@ class Carousel extends React.Component<IProps, IState> {
     transitionDuration: 1500,
     hideArrows: false,
     hideDots: false,
+    ratio: .5625,
+    noTouch: false,
     children: [],
   }
+
+  private $nodes: any = {}
 
   constructor(props) {
     super(props)
 
     this.state = {
-      activeSlide: props.children.length > 0 ? 1 : 0,
+      activeSlide: React.Children.toArray(props.children).length > 0 ? 1 : 0,
       animationShift: 0,
     }
 
@@ -37,8 +45,39 @@ class Carousel extends React.Component<IProps, IState> {
     this.handleClickDot = this.handleClickDot.bind(this)
   }
 
-  private getSlideCount() {
-    const length = this.props.children.length
+  public componentDidMount() {
+    try {
+      if (null != Hammer && !this.props.noTouch) {
+        const { carousel: $carousel, carouselBody: $carouselBody } = this.$nodes
+
+        new Hammer($carousel)
+        .on('panmove', (e) => {
+          if (this.state.animationShift !== 0) {
+            return
+          }
+
+          $carouselBody.style.transitionProperty = 'none'
+          $carouselBody.style.transform = `translate3d(${e.deltaX}px, 0, 0)`
+        })
+        .on('panend', (e) => {
+          if (Math.abs(e.deltaX) > ($carousel.offsetWidth / 2)) {
+            this.handleChange(this.state.activeSlide + (e.deltaX > 0 ? -1 : 1))
+          } else {
+            $carouselBody.style.transform = 'translate3d(0, 0, 0)'
+          }
+
+          $carouselBody.style.transitionProperty = null
+        })
+      }
+    } catch { }
+  }
+
+  private getChildrenCount(): number {
+    return React.Children.toArray(this.props.children).length
+  }
+
+  private getSlideCount(): number {
+    const length = this.getChildrenCount()
 
     return length > 0 ? length + 2 : 0
   }
@@ -85,9 +124,11 @@ class Carousel extends React.Component<IProps, IState> {
   private renderFirstSlide() {
     const { transitionDuration, children } = this.props
 
-    if (children.length > 0) {
+    const childrenCount = this.getChildrenCount()
+
+    if (childrenCount > 0) {
       return React.cloneElement(
-        React.Children.toArray(children)[children.length - 1] as React.ReactElement<any>,
+        React.Children.toArray(children)[childrenCount - 1] as React.ReactElement<any>,
       )
     }
   }
@@ -95,7 +136,9 @@ class Carousel extends React.Component<IProps, IState> {
   private renderLastSlide() {
     const { transitionDuration, children } = this.props
 
-    if (children.length > 0) {
+    const childrenCount = this.getChildrenCount()
+
+    if (childrenCount > 0) {
       return React.cloneElement(
         React.Children.toArray(children)[0] as React.ReactElement<any>,
       )
@@ -104,31 +147,45 @@ class Carousel extends React.Component<IProps, IState> {
 
   private renderDots() {
     const { children } = this.props
+    const { activeSlide, animationShift } = this.state
 
-    if (children.length > 0) {
+    const childrenCount = this.getChildrenCount()
+
+    if (childrenCount > 0) {
       return Array.apply(null, Array(this.getSlideCount() - 2))
         .fill(null)
-        .map(($null, index) =>
-          <div key={index} className="carousel-dots-dot" onClick={this.handleClickDot(index + 1)} />,
+        .map(($null, index) => (
+          <div
+            key={index}
+            className={classConcat(
+              'carousel-dots-dot',
+              { 'is-active': activeSlide === index + 1 && animationShift === 0 },
+            )}
+            onClick={this.handleClickDot(index + 1)}
+          />
+        ),
       )
     }
   }
 
   public render() {
-    const { transitionDuration, hideArrows, hideDots, children } = this.props
+    const { transitionDuration, hideArrows, hideDots, ratio, children } = this.props
     const { activeSlide, animationShift } = this.state
 
     const styles = {
       $body: {
         left: `${activeSlide * -100}%`,
         transform: `translate3d(${animationShift * 100}% , 0, 0)`,
+        transitionDuration: `${transitionDuration}ms`,
         transitionProperty: animationShift !== 0 ? 'transform' : 'none',
-        transitionDuration: animationShift !== 0 ? `${transitionDuration}ms` : '0',
       },
     }
 
     return (
-      <div className="carousel">
+      <div
+        className="carousel"
+        ref={($node) => { this.$nodes.carousel = $node }}
+      >
         <div
           className={classConcat(
             'carousel-arrows',
@@ -148,8 +205,12 @@ class Carousel extends React.Component<IProps, IState> {
           {this.renderDots()}
         </div>
 
-        <div className="carousel-ratio" />
-        <div className="carousel-body" style={styles.$body}>
+        <div className="carousel-ratio" style={{ paddingBottom: `${ratio * 100}%` }} />
+        <div
+          className="carousel-body"
+          style={styles.$body}
+          ref={($node) => { this.$nodes.carouselBody = $node }}
+        >
           {this.renderFirstSlide()}
           {
             React.Children.map(

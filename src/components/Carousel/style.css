@@ -69,6 +69,13 @@
       border-radius: 50%;
 
       cursor: pointer;
+
+      transition-property: background-color;
+      transition-duration: .16s;
+    }
+
+    .carousel-dots-dot.is-active {
+      background-color: rgba(0, 0, 0, .7);
     }
 
     .carousel-dots-dot + .carousel-dots-dot {
@@ -79,8 +86,6 @@
     display: block;
 
     width: 100%;
-
-    padding-bottom: 56.25%;
   }
 
   .carousel-body {
@@ -101,4 +106,6 @@
     flex-shrink: 0;
 
     cursor: pointer;
+
+    pointer-events: none;
   }
