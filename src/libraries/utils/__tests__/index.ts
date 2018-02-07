@@ -13,7 +13,7 @@ describe('classConcat(...)', () => {
     expect(classConcat(
       'test',
       {
-        ['test--verified']: true,
+        'test--verified': true,
       },
     )).toBe('test test--verified')
   })

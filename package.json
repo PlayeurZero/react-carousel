@@ -34,8 +34,15 @@
     "babel-core": "^6.26.0",
     "clean-webpack-plugin": "^0.1.18",
     "css-loader": "^0.28.9",
+    "enzyme": "^3.3.0",
+    "enzyme-adapter-react-16": "^1.1.1",
     "file-loader": "^1.1.6",
     "jest": "^22.1.4",
+    "postcss": "^6.0.17",
+    "postcss-cssnext": "^3.1.0",
+    "postcss-import": "^11.0.0",
+    "postcss-loader": "^2.1.0",
+    "postcss-url": "^7.3.0",
     "raw-loader": "^0.5.1",
     "source-map-loader": "^0.2.3",
     "style-loader": "^0.19.1",
@@ -48,5 +55,6 @@
     "webpack": "^3.10.0",
     "webpack-bundle-analyzer": "^2.9.2",
     "webpack-dev-server": "^2.11.1"
-  }
+  },
+  "peerDependencies": {}
 }

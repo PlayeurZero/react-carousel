@@ -36,7 +36,21 @@ const config = (env): webpack.Configuration => ({
         test: /\.css$/,
         use: [
           'style-loader',
-          'css-loader',
+          {
+            loader: 'css-loader',
+            options: {
+              modules: true,
+              importLoaders: 1,
+            },
+          },
+          {
+            loader: 'postcss-loader',
+            options: {
+              config: {
+                path: path.resolve(PROJECT_DIRECTORY, 'config', 'postcss.config.js'),
+              },
+            },
+          },
         ],
       },
       {
