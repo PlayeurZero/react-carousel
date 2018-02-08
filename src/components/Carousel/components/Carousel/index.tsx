@@ -11,6 +11,9 @@ interface IProps {
   hideDots?: boolean
   ratio?: number
   noTouch?: boolean
+  renderDot?: (active: boolean) => React.ReactElement<any>
+  renderLeftArrow?: () => React.ReactElement<any>
+  renderRightArrow?: () => React.ReactElement<any>
   children: Array<React.ReactElement<any>> | React.ReactElement<any>
 }
 
@@ -26,6 +29,9 @@ class Carousel extends React.Component<IProps, IState> {
     hideDots: false,
     ratio: .5625,
     noTouch: false,
+    renderDot: (active: boolean) =>  <div className={classConcat('carousel-dots-dot', { 'is-active': active } )} />,
+    renderLeftArrow: () => <div className="carousel-arrows-arrowLeft">◀</div>,
+    renderRightArrow: () => <div className="carousel-arrows-arrowRight">▶</div>,
     children: [],
   }
 
@@ -46,11 +52,10 @@ class Carousel extends React.Component<IProps, IState> {
   }
 
   public componentDidMount() {
-    try {
-      if (null != Hammer && !this.props.noTouch) {
-        const { carousel: $carousel, carouselBody: $carouselBody } = this.$nodes
+    if ('undefined' !== typeof Hammer && !this.props.noTouch) {
+      const { carousel: $carousel, carouselBody: $carouselBody } = this.$nodes
 
-        new Hammer($carousel)
+      new Hammer($carousel)
         .on('panmove', (e) => {
           if (this.state.animationShift !== 0) {
             return
@@ -68,8 +73,7 @@ class Carousel extends React.Component<IProps, IState> {
 
           $carouselBody.style.transitionProperty = null
         })
-      }
-    } catch { }
+    }
   }
 
   private getChildrenCount(): number {
@@ -146,7 +150,7 @@ class Carousel extends React.Component<IProps, IState> {
   }
 
   private renderDots() {
-    const { children } = this.props
+    const { renderDot, children } = this.props
     const { activeSlide, animationShift } = this.state
 
     const childrenCount = this.getChildrenCount()
@@ -155,21 +159,17 @@ class Carousel extends React.Component<IProps, IState> {
       return Array.apply(null, Array(this.getSlideCount() - 2))
         .fill(null)
         .map(($null, index) => (
-          <div
-            key={index}
-            className={classConcat(
-              'carousel-dots-dot',
-              { 'is-active': activeSlide === index + 1 && animationShift === 0 },
-            )}
-            onClick={this.handleClickDot(index + 1)}
-          />
+          React.cloneElement(
+            renderDot(activeSlide === index + 1 && animationShift === 0),
+            { onClick: this.handleClickDot(index + 1), key: index },
+          )
         ),
       )
     }
   }
 
   public render() {
-    const { transitionDuration, hideArrows, hideDots, ratio, children } = this.props
+    const { transitionDuration, hideArrows, hideDots, ratio, renderLeftArrow, renderRightArrow, children } = this.props
     const { activeSlide, animationShift } = this.state
 
     const styles = {
@@ -192,8 +192,8 @@ class Carousel extends React.Component<IProps, IState> {
             { ['carousel-arrows--is-hidden']: hideArrows },
           )}
         >
-          <div className="carousel-arrows-arrowLeft" onClick={this.handleClickArrowLeft}>◀</div>
-          <div className="carousel-arrows-arrowRight" onClick={this.handleClickArrowRight}>▶</div>
+          {React.cloneElement(renderLeftArrow(), { onClick: this.handleClickArrowLeft })}
+          {React.cloneElement(renderRightArrow(), { onClick: this.handleClickArrowRight })}
         </div>
 
         <div
