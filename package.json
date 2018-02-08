@@ -19,13 +19,7 @@
     "lint:ts": "tslint --config ./config/tslint.json 'src/**/*.{ts,tsx}'",
     "fix:ts": "tslint --config ./config/tslint.json 'src/**/*.{ts,tsx}' --fix"
   },
-  "dependencies": {
-    "@blueprintjs/core": "^1.35.2",
-    "react": "^16.2.0",
-    "react-addons-css-transition-group": "^15.6.2",
-    "react-dom": "^16.2.0",
-    "tocca": "^2.0.3"
-  },
+  "dependencies": {},
   "devDependencies": {
     "@types/jest": "^22.1.1",
     "@types/react": "^16.0.34",
@@ -44,6 +38,8 @@
     "postcss-loader": "^2.1.0",
     "postcss-url": "^7.3.0",
     "raw-loader": "^0.5.1",
+    "react": "^16.2.0",
+    "react-dom": "^16.2.0",
     "source-map-loader": "^0.2.3",
     "style-loader": "^0.19.1",
     "ts-loader": "^3.2.0",
@@ -56,5 +52,8 @@
     "webpack-bundle-analyzer": "^2.9.2",
     "webpack-dev-server": "^2.11.1"
   },
-  "peerDependencies": {}
+  "peerDependencies": {
+    "react": "16.x.x",
+    "react-dom": "^16.x.x"
+  }
 }
