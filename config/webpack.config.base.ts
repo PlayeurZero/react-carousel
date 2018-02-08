@@ -39,7 +39,6 @@ const config = (env): webpack.Configuration => ({
           {
             loader: 'css-loader',
             options: {
-              modules: true,
               importLoaders: 1,
             },
           },
