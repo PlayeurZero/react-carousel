@@ -1,6 +1,6 @@
 {
   "name": "react-carousel",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "main": "lib/index.js",
   "files": [
     "lib/index.js",
@@ -53,7 +53,9 @@
     "webpack-dev-server": "^2.11.1"
   },
   "peerDependencies": {
-    "react": "16.x.x",
-    "react-dom": "^16.x.x"
+    "react": ">= 16.0.0"
+  },
+  "optionalDependencies": {
+    "hammerjs": "2.x.x"
   }
 }
