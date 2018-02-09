@@ -1,3 +1,4 @@
+import * as React from 'react'
 import { default as Carousel, IProps as ICarouselProps } from './components/Carousel'
 import { default as Slide, IProps as ISlideProps } from './components/Slide'
 
