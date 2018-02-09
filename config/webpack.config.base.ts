@@ -11,7 +11,7 @@ const config = (env): webpack.Configuration => ({
   entry: [path.resolve(SRC_DIRECTORY, 'index.tsx')],
   output: {
     path: path.resolve(DIST_DIRECTORY),
-    filename: 'bundle.js',
+    filename: 'index.js',
     publicPath: '/',
   },
   externals: {
