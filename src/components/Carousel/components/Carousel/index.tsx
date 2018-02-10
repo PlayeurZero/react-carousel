@@ -1,7 +1,8 @@
 import * as React from 'react'
-import Slide from '../Slide'
 
 import { classConcat } from '../../../../libraries/utils'
+
+import * as classes from './styles.css'
 
 declare const Hammer: (...args: any[]) => void
 
@@ -29,9 +30,12 @@ class Carousel extends React.Component<IProps, IState> {
     hideDots: false,
     ratio: .5625,
     noTouch: false,
-    renderDot: (active: boolean) =>  <div className={classConcat('carousel-dots-dot', { 'is-active': active } )} />,
-    renderLeftArrow: () => <div className="carousel-arrows-arrowLeft">◀</div>,
-    renderRightArrow: () => <div className="carousel-arrows-arrowRight">▶</div>,
+    renderDot: (active: boolean) =>
+      <div className={classConcat(classes['carousel-dots-dot'], { 'is-active': active } )} />,
+    renderLeftArrow: () =>
+      <div className={classes['carousel-arrows-arrowLeft']}>◀</div>,
+    renderRightArrow: () =>
+      <div className={classes['carousel-arrows-arrowRight']}>▶</div>,
     children: [],
   }
 
@@ -183,13 +187,13 @@ class Carousel extends React.Component<IProps, IState> {
 
     return (
       <div
-        className="carousel"
+        className={classes['carousel']}
         ref={($node) => { this.$nodes.carousel = $node }}
       >
         <div
           className={classConcat(
-            'carousel-arrows',
-            { ['carousel-arrows--is-hidden']: hideArrows },
+            classes['carousel-arrows'],
+            { [classes['carousel-arrows--is-hidden']]: hideArrows },
           )}
         >
           {React.cloneElement(renderLeftArrow(), { onClick: this.handleClickArrowLeft })}
@@ -198,16 +202,16 @@ class Carousel extends React.Component<IProps, IState> {
 
         <div
           className={classConcat(
-            'carousel-dots',
-            { ['carousel-dots--is-hidden']: hideDots },
+            classes['carousel-dots'],
+            { [classes['carousel-dots--is-hidden']]: hideDots },
           )}
         >
           {this.renderDots()}
         </div>
 
-        <div className="carousel-ratio" style={{ paddingBottom: `${ratio * 100}%` }} />
+        <div className={classes['carousel-ratio']} style={{ paddingBottom: `${ratio * 100}%` }} />
         <div
-          className="carousel-body"
+          className={classes['carousel-body']}
           style={styles.$body}
           ref={($node) => { this.$nodes.carouselBody = $node }}
         >

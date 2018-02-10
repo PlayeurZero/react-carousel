@@ -2,6 +2,7 @@ import * as path from 'path'
 import * as webpack from 'webpack'
 import * as UglifyJsPlugin from 'uglifyjs-webpack-plugin'
 
+const PROJECT_NAME = 'react-carousel'
 const PROJECT_DIRECTORY = path.resolve(__dirname, '..')
 const SRC_DIRECTORY = path.resolve(PROJECT_DIRECTORY, 'src')
 const DIST_DIRECTORY = path.resolve(PROJECT_DIRECTORY, 'lib')
@@ -13,6 +14,10 @@ const config = (env): webpack.Configuration => ({
     filename: 'index.js',
     publicPath: '/',
     libraryTarget: 'umd',
+  },
+  externals: {
+    'react': 'React',
+    'react-dom': 'ReactDOM',
   },
   module: {
     rules: [
@@ -35,7 +40,10 @@ const config = (env): webpack.Configuration => ({
           {
             loader: 'css-loader',
             options: {
+              modules: true,
               importLoaders: 1,
+              camelCase: false,
+              localIdentName: `${PROJECT_NAME}__[local]`,
             },
           },
           {
@@ -68,11 +76,11 @@ const config = (env): webpack.Configuration => ({
     ],
   },
   resolve: {
-    extensions: ['.ts', '.tsx', '.js', '.json'],
+    extensions: ['.ts', '.tsx', '.js', '.json', '.css'],
   },
   plugins: [
     new webpack.EnvironmentPlugin(env),
   ],
 })
 
-export { config as default, PROJECT_DIRECTORY, SRC_DIRECTORY, DIST_DIRECTORY }
+export { config as default, PROJECT_DIRECTORY, SRC_DIRECTORY, DIST_DIRECTORY, PROJECT_NAME }

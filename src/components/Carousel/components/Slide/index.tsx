@@ -1,5 +1,7 @@
 import * as React from 'react'
 
+import * as classes from './styles.css'
+
 interface IProps {
   children: React.ReactNode
 }
@@ -13,7 +15,7 @@ class Slide extends React.Component<IProps, IState> {
 
     return (
       <div
-        className="carousel-slide"
+        className={classes['carousel-slide']}
       >
         {children}
       </div>
