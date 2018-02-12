@@ -10,3 +10,7 @@ Fixed: make the project as library
 
 Fixed: css will no longer overload other styles
 Fixed: removed React from bundle
+
+# 1.0.3
+
+Fixed: package.json
