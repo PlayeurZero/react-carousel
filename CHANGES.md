@@ -14,3 +14,7 @@ Fixed: removed React from bundle
 # 1.0.3
 
 Fixed: package.json
+
+# 1.0.4
+
+Fixed: webpack config (cannot find module react)
