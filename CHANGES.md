@@ -18,3 +18,7 @@ Fixed: package.json
 # 1.0.4
 
 Fixed: webpack config (cannot find module react)
+
+# 1.0.5
+
+Fixed: webpack config (cannot find module react) again

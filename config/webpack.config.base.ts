@@ -15,7 +15,22 @@ const config = (env): webpack.Configuration => ({
     publicPath: '/',
     libraryTarget: 'umd',
   },
-  externals: ['react', 'react-dom'],
+  externals: [
+    {
+      "react": {
+        root: "React",
+        commonjs2: "react",
+        commonjs: "react",
+        amd: "react"
+      },
+      "react-dom": {
+        root: "ReactDom",
+        commonjs2: "react-dom",
+        commonjs: "react-dom",
+        amd: "react-dom"
+      }
+    }
+  ],
   module: {
     rules: [
       {
