@@ -31,7 +31,7 @@ class Carousel extends React.Component<IProps, IState> {
     ratio: .5625,
     noTouch: false,
     renderDot: (active: boolean) =>
-      <div className={classConcat(classes['carousel-dots-dot'], { 'is-active': active } )} />,
+      <div className={classConcat(classes['carousel-dots-dot'], { [classes['is-active']]: active } )} />,
     renderLeftArrow: () =>
       <div className={classes['carousel-arrows-arrowLeft']}>◀</div>,
     renderRightArrow: () =>
@@ -39,7 +39,9 @@ class Carousel extends React.Component<IProps, IState> {
     children: [],
   }
 
-  private $nodes: any = {}
+  private $nodes: any = {
+    slides: [],
+  }
 
   constructor(props) {
     super(props)
@@ -60,22 +62,11 @@ class Carousel extends React.Component<IProps, IState> {
       const { carousel: $carousel, carouselBody: $carouselBody } = this.$nodes
 
       new Hammer($carousel)
-        .on('panmove', (e) => {
-          if (this.state.animationShift !== 0) {
-            return
-          }
-
-          $carouselBody.style.transitionProperty = 'none'
-          $carouselBody.style.transform = `translate3d(${e.deltaX}px, 0, 0)`
+        .on('swipeleft', (e) => {
+          this.handleChange(this.state.activeSlide + 1)
         })
-        .on('panend', (e) => {
-          if (Math.abs(e.deltaX) > ($carousel.offsetWidth / 2)) {
-            this.handleChange(this.state.activeSlide + (e.deltaX > 0 ? -1 : 1))
-          } else {
-            $carouselBody.style.transform = 'translate3d(0, 0, 0)'
-          }
-
-          $carouselBody.style.transitionProperty = null
+        .on('swiperight', (e) => {
+          this.handleChange(this.state.activeSlide - 1)
         })
     }
   }
@@ -177,7 +168,7 @@ class Carousel extends React.Component<IProps, IState> {
     const { activeSlide, animationShift } = this.state
 
     const styles = {
-      $body: {
+      $carouselWrapper: {
         left: `${activeSlide * -100}%`,
         transform: `translate3d(${animationShift * 100}% , 0, 0)`,
         transitionDuration: `${transitionDuration}ms`,
@@ -212,19 +203,23 @@ class Carousel extends React.Component<IProps, IState> {
         <div className={classes['carousel-ratio']} style={{ paddingBottom: `${ratio * 100}%` }} />
         <div
           className={classes['carousel-body']}
-          style={styles.$body}
           ref={($node) => { this.$nodes.carouselBody = $node }}
         >
-          {this.renderFirstSlide()}
-          {
-            React.Children.map(
-              children,
-              (child) =>
-                React.cloneElement(child as React.ReactElement<any>,
-                ),
-            )
-          }
-          {this.renderLastSlide()}
+          <div
+            style={styles.$carouselWrapper}
+            className={classes['carousel-wrapper']}
+            ref={($node) => { this.$nodes.carouselWrapper = $node }}
+          >
+            {this.renderFirstSlide()}
+            {
+              React.Children.map(
+                children,
+                (child, index) =>
+                  React.cloneElement(child as React.ReactElement<any>, { key: index }),
+              )
+            }
+            {this.renderLastSlide()}
+          </div>
         </div>
       </div>
     )
