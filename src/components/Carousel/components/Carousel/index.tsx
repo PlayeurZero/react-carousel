@@ -12,6 +12,9 @@ interface IProps {
   hideDots?: boolean
   ratio?: number
   noTouch?: boolean
+  autoplay?: boolean
+  autoplayDuration?: number
+  autoplayPauseOnHover?: boolean
   renderDot?: (active: boolean) => React.ReactElement<any>
   renderLeftArrow?: () => React.ReactElement<any>
   renderRightArrow?: () => React.ReactElement<any>
@@ -30,8 +33,11 @@ class Carousel extends React.Component<IProps, IState> {
     hideDots: false,
     ratio: .5625,
     noTouch: false,
+    autoplay: false,
+    autoplayDuration: 3000,
+    autoplayPauseOnHover: true,
     renderDot: (active: boolean) =>
-      <div className={classConcat(classes['carousel-dots-dot'], { [classes['is-active']]: active } )} />,
+      <div className={classConcat(classes['carousel-dots-dot'], { [classes['is-active']]: active })} />,
     renderLeftArrow: () =>
       <div className={classes['carousel-arrows-arrowLeft']}>◀</div>,
     renderRightArrow: () =>
@@ -42,6 +48,8 @@ class Carousel extends React.Component<IProps, IState> {
   private $nodes: any = {
     slides: [],
   }
+
+  private autoplay: number
 
   constructor(props) {
     super(props)
@@ -55,20 +63,40 @@ class Carousel extends React.Component<IProps, IState> {
     this.handleClickArrowLeft = this.handleClickArrowLeft.bind(this)
     this.handleClickArrowRight = this.handleClickArrowRight.bind(this)
     this.handleClickDot = this.handleClickDot.bind(this)
+    this.handleMouseOver = this.handleMouseOver.bind(this)
+    this.handleMouseLeave = this.handleMouseLeave.bind(this)
   }
 
   public componentDidMount() {
     if ('undefined' !== typeof Hammer && !this.props.noTouch) {
-      const { carousel: $carousel, carouselBody: $carouselBody } = this.$nodes
+      const { carousel: $carousel } = this.$nodes
 
       new Hammer($carousel)
-        .on('swipeleft', (e) => {
+        .on('swipeleft', () => {
           this.handleChange(this.state.activeSlide + 1)
         })
-        .on('swiperight', (e) => {
+        .on('swiperight', () => {
           this.handleChange(this.state.activeSlide - 1)
         })
     }
+
+    if (this.props.autoplay) {
+      this.runAutoplay()
+    }
+  }
+
+  private runAutoplay() {
+    if (null != this.autoplay) { return }
+
+    this.autoplay = window.setInterval(() => {
+      this.handleChange(this.state.activeSlide + 1)
+    }, this.props.autoplayDuration + this.props.transitionDuration)
+  }
+
+  private pauseAutoplay() {
+    window.clearInterval(this.autoplay)
+
+    this.autoplay = null
   }
 
   private getChildrenCount(): number {
@@ -99,11 +127,11 @@ class Carousel extends React.Component<IProps, IState> {
       activeSlide = 1
     }
 
-    this.setState({ animationShift })
-
-    setTimeout(() => {
-      this.setState({ animationShift: 0, activeSlide })
-    }, this.props.transitionDuration)
+    this.setState({ animationShift }, () => {
+      setTimeout(() => {
+        this.setState({ animationShift: 0, activeSlide })
+      }, this.props.transitionDuration)
+    })
   }
 
   private handleClickDot(id) {
@@ -130,6 +158,18 @@ class Carousel extends React.Component<IProps, IState> {
         React.Children.toArray(children)[childrenCount - 1] as React.ReactElement<any>,
       )
     }
+  }
+
+  private handleMouseOver() {
+    if (!(this.props.autoplayPauseOnHover && this.props.autoplay)) { return }
+
+    this.pauseAutoplay()
+  }
+
+  private handleMouseLeave() {
+    if (!(this.props.autoplayPauseOnHover && this.props.autoplay)) { return }
+
+    this.runAutoplay()
   }
 
   private renderLastSlide() {
@@ -169,8 +209,7 @@ class Carousel extends React.Component<IProps, IState> {
 
     const styles = {
       $carouselWrapper: {
-        left: `${activeSlide * -100}%`,
-        transform: `translate3d(${animationShift * 100}% , 0, 0)`,
+        transform: `translate3d(${(animationShift - activeSlide) * 100}% , 0, 0)`,
         transitionDuration: `${transitionDuration}ms`,
         transitionProperty: animationShift !== 0 ? 'transform' : 'none',
       },
@@ -180,6 +219,8 @@ class Carousel extends React.Component<IProps, IState> {
       <div
         className={classes['carousel']}
         ref={($node) => { this.$nodes.carousel = $node }}
+        onMouseOver={this.handleMouseOver}
+        onMouseLeave={this.handleMouseLeave}
       >
         <div
           className={classConcat(
@@ -223,7 +264,6 @@ class Carousel extends React.Component<IProps, IState> {
         </div>
       </div>
     )
-
   }
 }
 

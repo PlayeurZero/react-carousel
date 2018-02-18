@@ -7,6 +7,7 @@ const PROJECT_DIRECTORY = path.resolve(__dirname, '..')
 const SRC_DIRECTORY = path.resolve(PROJECT_DIRECTORY, 'src')
 const DIST_DIRECTORY = path.resolve(PROJECT_DIRECTORY, 'lib')
 
+// @ts-ignore
 const config = (env): webpack.Configuration => ({
   entry: [path.resolve(SRC_DIRECTORY, 'index.ts')],
   output: {
@@ -17,19 +18,19 @@ const config = (env): webpack.Configuration => ({
   },
   externals: [
     {
-      "react": {
-        root: "React",
-        commonjs2: "react",
-        commonjs: "react",
-        amd: "react"
+      'react': {
+        root: 'React',
+        commonjs2: 'react',
+        commonjs: 'react',
+        amd: 'react',
       },
-      "react-dom": {
-        root: "ReactDom",
-        commonjs2: "react-dom",
-        commonjs: "react-dom",
-        amd: "react-dom"
-      }
-    }
+      'react-dom': {
+        root: 'ReactDom',
+        commonjs2: 'react-dom',
+        commonjs: 'react-dom',
+        amd: 'react-dom',
+      },
+    },
   ],
   module: {
     rules: [
