@@ -18,6 +18,8 @@ interface IProps {
   renderDot?: (active: boolean) => React.ReactElement<any>
   renderLeftArrow?: () => React.ReactElement<any>
   renderRightArrow?: () => React.ReactElement<any>
+  defaultActiveSlide?: number
+  activeSlide?: number
   children: Array<React.ReactElement<any>> | React.ReactElement<any>
 }
 
@@ -36,6 +38,7 @@ class Carousel extends React.Component<IProps, IState> {
     autoplay: false,
     autoplayDuration: 3000,
     autoplayPauseOnHover: true,
+    defaultActiveSlide: 0,
     renderDot: (active: boolean) =>
       <div className={classConcat(classes['carousel-dots-dot'], { [classes['is-active']]: active })} />,
     renderLeftArrow: () =>
@@ -82,6 +85,10 @@ class Carousel extends React.Component<IProps, IState> {
 
     if (this.props.autoplay) {
       this.runAutoplay()
+    }
+
+    if (this.props.defaultActiveSlide) {
+      this.handleChange(this.props.defaultActiveSlide)
     }
   }
 
@@ -148,18 +155,6 @@ class Carousel extends React.Component<IProps, IState> {
     this.handleChange(this.state.activeSlide + 1)
   }
 
-  private renderFirstSlide() {
-    const { transitionDuration, children } = this.props
-
-    const childrenCount = this.getChildrenCount()
-
-    if (childrenCount > 0) {
-      return React.cloneElement(
-        React.Children.toArray(children)[childrenCount - 1] as React.ReactElement<any>,
-      )
-    }
-  }
-
   private handleMouseOver() {
     if (!(this.props.autoplayPauseOnHover && this.props.autoplay)) { return }
 
@@ -172,6 +167,19 @@ class Carousel extends React.Component<IProps, IState> {
     this.runAutoplay()
   }
 
+  private renderFirstSlide() {
+    const { transitionDuration, children } = this.props
+
+    const childrenCount = this.getChildrenCount()
+
+    if (childrenCount > 0) {
+      return React.cloneElement(
+        React.Children.toArray(children)[childrenCount - 1] as React.ReactElement<any>,
+        { key: 'carousel__firstSlide' },
+      )
+    }
+  }
+
   private renderLastSlide() {
     const { transitionDuration, children } = this.props
 
@@ -180,6 +188,7 @@ class Carousel extends React.Component<IProps, IState> {
     if (childrenCount > 0) {
       return React.cloneElement(
         React.Children.toArray(children)[0] as React.ReactElement<any>,
+        { key: 'carousel__lastSlide' },
       )
     }
   }
