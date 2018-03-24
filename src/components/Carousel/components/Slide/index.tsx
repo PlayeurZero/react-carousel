@@ -8,7 +8,7 @@ interface IProps {
 
 interface IState { }
 
-class Slide extends React.Component<IProps, IState> {
+class Slide extends React.PureComponent<IProps, IState> {
 
   public render() {
     const { children } = this.props

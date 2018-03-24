@@ -1,6 +1,6 @@
 # React Carousel
 
-__A carousel that renders medias such as images or videos using React.__
+A carousel that renders medias such as images or videos using React.
 
 ## Install
 
@@ -64,9 +64,23 @@ ReactDOM.render(
 
 ### Props
 
-| Name                 | Description              |
-|----------------------|--------------------------|
-| `transitionDuration` | `number?` = `1500` in ms |
-| `hideArrows`         | `boolean` = `false`      |
-| `hideDots`           | `boolean` = `false`      |
-| `ratio`              | `number` = `0.5625` 16:9 |
+| Name                   | Description                         |
+|------------------------|-------------------------------------|
+| `transitionDuration`   | `number?` = `1500` in ms            |
+| `hideArrows`           | `boolean?` = `false`                |
+| `hideDots`             | `boolean?` = `false`                |
+| `ratio`                | `number?` = `0.5625` 16:9           |
+| `noTouch`              | `boolean?` = `false`                |
+| `autoplay`             | `boolean?` = `false`                |
+| `autoplayDuration`     | `number?` = `3000` in ms            |
+| `autoplayPauseOnHover` | `boolean?` = `true`                 |
+| `defaultActiveSlide`   | `number?` = `0`                     |
+| `activeSlide`          | `number?`                           |
+| `renderDot`            | `(active: boolean) => ReactElement` |
+| `renderLeftArrow`      | `() => ReactElement`                |
+| `renderRightArrow`     | `() => ReactElement`                |
+| `children`             | `<Carousel.Slide>`                  |
+
+## License
+
+[MIT licensed](LICENSE)

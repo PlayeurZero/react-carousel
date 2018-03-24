@@ -22,3 +22,10 @@ Fixed: webpack config (cannot find module react)
 # 1.0.5
 
 Fixed: webpack config (cannot find module react) again
+
+# 1.0.6
+
+Fixed: unclickable slide
+Added: autoplay
+
+# 1.0.7

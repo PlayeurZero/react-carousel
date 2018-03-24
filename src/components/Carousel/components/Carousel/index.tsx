@@ -1,6 +1,6 @@
 import * as React from 'react'
 
-import { classConcat } from '../../../../libraries/utils'
+import { classConcat, delayFallback } from '../../../../libraries/utils'
 
 import * as classes from './styles.css'
 
@@ -15,12 +15,13 @@ interface IProps {
   autoplay?: boolean
   autoplayDuration?: number
   autoplayPauseOnHover?: boolean
+  defaultActiveSlide?: number
+  activeSlide?: number
   renderDot?: (active: boolean) => React.ReactElement<any>
   renderLeftArrow?: () => React.ReactElement<any>
   renderRightArrow?: () => React.ReactElement<any>
-  defaultActiveSlide?: number
-  activeSlide?: number
   children: Array<React.ReactElement<any>> | React.ReactElement<any>
+  onSlideChange: (activeSlide: number) => void
 }
 
 interface IState {
@@ -28,7 +29,7 @@ interface IState {
   animationShift: number
 }
 
-class Carousel extends React.Component<IProps, IState> {
+class Carousel extends React.PureComponent<IProps, IState> {
   public static defaultProps: Partial<IProps> = {
     transitionDuration: 1500,
     hideArrows: false,
@@ -39,13 +40,14 @@ class Carousel extends React.Component<IProps, IState> {
     autoplayDuration: 3000,
     autoplayPauseOnHover: true,
     defaultActiveSlide: 0,
+    children: [],
     renderDot: (active: boolean) =>
       <div className={classConcat(classes['carousel-dots-dot'], { [classes['is-active']]: active })} />,
     renderLeftArrow: () =>
       <div className={classes['carousel-arrows-arrowLeft']}>◀</div>,
     renderRightArrow: () =>
       <div className={classes['carousel-arrows-arrowRight']}>▶</div>,
-    children: [],
+    onSlideChange: () => { return },
   }
 
   private $nodes: any = {
@@ -54,11 +56,20 @@ class Carousel extends React.Component<IProps, IState> {
 
   private autoplay: number
 
-  constructor(props) {
+  constructor(props: IProps) {
     super(props)
 
+    const childrenCount = React.Children.toArray(this.props.children).length
+    const slideCount = childrenCount > 0 ? childrenCount + 2 : 0
+
+    const activeSlide = (
+      null != props.activeSlide
+        ? props.activeSlide
+        : props.defaultActiveSlide) % slideCount
+        || 0
+
     this.state = {
-      activeSlide: React.Children.toArray(props.children).length > 0 ? 1 : 0,
+      activeSlide: childrenCount > 0 ? activeSlide + 1 : 0,
       animationShift: 0,
     }
 
@@ -92,11 +103,21 @@ class Carousel extends React.Component<IProps, IState> {
     }
   }
 
+  public componentWillReceiveProps(nextProps: IProps) {
+    if (null != nextProps.activeSlide && nextProps.activeSlide !== this.props.activeSlide) {
+      this.handleChange(this.getActiveSlide(nextProps.activeSlide), true)
+    }
+
+    if (null != nextProps.defaultActiveSlide && nextProps.defaultActiveSlide !== this.props.defaultActiveSlide) {
+      this.handleChange(this.getActiveSlide(nextProps.defaultActiveSlide), true)
+    }
+  }
+
   private runAutoplay() {
     if (null != this.autoplay) { return }
 
     this.autoplay = window.setInterval(() => {
-      this.handleChange(this.state.activeSlide + 1)
+      this.handleChange(this.state.activeSlide + 1, false, true)
     }, this.props.autoplayDuration + this.props.transitionDuration)
   }
 
@@ -116,7 +137,21 @@ class Carousel extends React.Component<IProps, IState> {
     return length > 0 ? length + 2 : 0
   }
 
-  private handleChange(id) {
+  private getActiveSlide(id, includesFakeSlides: boolean = false) {
+    const length = this.getChildrenCount()
+
+    if (includesFakeSlides) {
+      return length > 0 ? id - 1 : 0
+    } else {
+      if (id > (length - 1) || id < 0) {
+        throw new RangeError('`activeSlide` must be between 0 and the slide count.')
+      }
+
+      return length > 0 ? id + 1 : 0
+    }
+  }
+
+  private handleChange(id, force = false, fromAutoplay = false) {
     const slideCount = this.getSlideCount()
     let activeSlide = (id + slideCount) % slideCount
 
@@ -124,6 +159,10 @@ class Carousel extends React.Component<IProps, IState> {
 
     if (this.state.animationShift !== 0 || animationShift === 0) {
       return
+    }
+
+    if (!(fromAutoplay && null != this.props.activeSlide)) {
+      this.props.onSlideChange(this.getActiveSlide(activeSlide, true))
     }
 
     if (activeSlide === 0) {
@@ -134,10 +173,14 @@ class Carousel extends React.Component<IProps, IState> {
       activeSlide = 1
     }
 
+    if (null != this.props.activeSlide && !force) {
+      return
+    }
+
     this.setState({ animationShift }, () => {
-      setTimeout(() => {
+      (this.$nodes.carousel as HTMLElement).addEventListener('transitionEnd', delayFallback(() => {
         this.setState({ animationShift: 0, activeSlide })
-      }, this.props.transitionDuration)
+      }, this.props.transitionDuration))
     })
   }
 
@@ -204,7 +247,7 @@ class Carousel extends React.Component<IProps, IState> {
         .fill(null)
         .map(($null, index) => (
           React.cloneElement(
-            renderDot(activeSlide === index + 1 && animationShift === 0),
+            renderDot(activeSlide - animationShift === index + 1),
             { onClick: this.handleClickDot(index + 1), key: index },
           )
         ),

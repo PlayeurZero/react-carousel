@@ -11,46 +11,13 @@ export const classConcat = (...args: IClassConcatArgs[]): string =>
     }
   }).filter((arg) => arg !== '').join(' ')
 
-/**
- * Executes the function only if the delay has passed.
- * If the function is recalled before the delay is elapsed, the delay will be restarted.
- * @param callback
- * @param delay
- */
-export const debounce = (callback: (...args: any[]) => void, delay: number) => {
-  let timer
-
-  return (...args) => {
+export const delayFallback = (callback, delay: number, marginOfError: number = 150) => {
+  const func = (...args) => {
     clearTimeout(timer)
-
-    timer = setTimeout(() => {
-      callback.apply(void 0, args)
-    }, delay)
+    callback(...args)
   }
-}
 
-/**
- * Executes the function will be called at most one time until the delay been passed.
- * @param callback
- * @param delay
- */
-export const throttle = (callback: (...args: any[]) => void, delay: number) => {
-  let last
-  let timer
+  const timer = setTimeout(func, delay)
 
-  return (...args) => {
-    const now = new Date()
-
-    if (last && now < last + delay) {
-      clearTimeout(timer)
-
-      timer = setTimeout(() => {
-        last = now
-        callback.apply(void 0, args)
-      }, delay)
-    } else {
-      last = now
-      callback.apply(void 0, args)
-    }
-  }
+  return func
 }
