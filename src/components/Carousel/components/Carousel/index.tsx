@@ -21,7 +21,7 @@ interface IProps {
   renderLeftArrow?: () => React.ReactElement<any>
   renderRightArrow?: () => React.ReactElement<any>
   children: Array<React.ReactElement<any>> | React.ReactElement<any>
-  onSlideChange: (activeSlide: number) => void
+  onSlideChange?: (activeSlide: number) => void
 }
 
 interface IState {
@@ -53,8 +53,8 @@ class Carousel extends React.PureComponent<IProps, IState> {
   private $nodes: any = {
     slides: [],
   }
-
   private autoplay: number
+  private hammer
 
   constructor(props: IProps) {
     super(props)
@@ -79,19 +79,17 @@ class Carousel extends React.PureComponent<IProps, IState> {
     this.handleClickDot = this.handleClickDot.bind(this)
     this.handleMouseOver = this.handleMouseOver.bind(this)
     this.handleMouseLeave = this.handleMouseLeave.bind(this)
+    this.handleNextSlide = this.handleNextSlide.bind(this)
+    this.handlePreviousSlide = this.handlePreviousSlide.bind(this)
   }
 
   public componentDidMount() {
     if ('undefined' !== typeof Hammer && !this.props.noTouch) {
       const { carousel: $carousel } = this.$nodes
 
-      new Hammer($carousel)
-        .on('swipeleft', () => {
-          this.handleChange(this.state.activeSlide + 1)
-        })
-        .on('swiperight', () => {
-          this.handleChange(this.state.activeSlide - 1)
-        })
+      this.hammer = new Hammer($carousel)
+        .on('swipeleft', this.handleNextSlide)
+        .on('swiperight', this.handlePreviousSlide)
     }
 
     if (this.props.autoplay) {
@@ -100,6 +98,14 @@ class Carousel extends React.PureComponent<IProps, IState> {
 
     if (this.props.defaultActiveSlide) {
       this.handleChange(this.props.defaultActiveSlide)
+    }
+  }
+
+  public componentWillUnmount() {
+    if (null != this.hammer) {
+      this.hammer
+        .off('swipeleft', this.handleNextSlide)
+        .off('swiperight', this.handlePreviousSlide)
     }
   }
 
@@ -151,6 +157,14 @@ class Carousel extends React.PureComponent<IProps, IState> {
     }
   }
 
+  private handleNextSlide() {
+    this.handleChange(this.state.activeSlide + 1)
+  }
+
+  private handlePreviousSlide() {
+    this.handleChange(this.state.activeSlide - 1)
+  }
+
   private handleChange(id, force = false, fromAutoplay = false) {
     const slideCount = this.getSlideCount()
     let activeSlide = (id + slideCount) % slideCount
@@ -178,9 +192,13 @@ class Carousel extends React.PureComponent<IProps, IState> {
     }
 
     this.setState({ animationShift }, () => {
-      (this.$nodes.carousel as HTMLElement).addEventListener('transitionEnd', delayFallback(() => {
+      const callback = delayFallback(() => {
+        (this.$nodes.carousel as HTMLElement).removeEventListener('transitionEnd', callback)
+
         this.setState({ animationShift: 0, activeSlide })
-      }, this.props.transitionDuration))
+      }, this.props.transitionDuration) as () => {}
+
+      (this.$nodes.carousel as HTMLElement).addEventListener('transitionEnd', callback)
     })
   }
 
