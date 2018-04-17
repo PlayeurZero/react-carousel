@@ -5,7 +5,7 @@
  * @param {number} delay
  * @param {number} [marginOfError=150]
  */
-export default (callback: (...args: any[]) => {}, delay: number, marginOfError: number = 150) => {
+export default (callback: (...args: any[]) => void, delay: number, marginOfError: number = 150) => {
   const func = (...args) => {
     clearTimeout(timer)
     callback(...args)
