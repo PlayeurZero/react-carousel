@@ -54,7 +54,7 @@ class Carousel extends React.PureComponent<IProps, IState> {
     slides: [],
   }
   private autoplay: number
-  private hammer
+  private hammer: any
 
   constructor(props: IProps) {
     super(props)
@@ -81,12 +81,17 @@ class Carousel extends React.PureComponent<IProps, IState> {
     this.handleMouseLeave = this.handleMouseLeave.bind(this)
     this.handleNextSlide = this.handleNextSlide.bind(this)
     this.handlePreviousSlide = this.handlePreviousSlide.bind(this)
+    this.handleKeyDown = this.handleKeyDown.bind(this)
   }
 
   public componentDidMount() {
-    if ('undefined' !== typeof Hammer && !this.props.noTouch) {
-      const { carousel: $carousel } = this.$nodes
+    const { carousel: $carousel } = this.$nodes
 
+    if (!($carousel instanceof HTMLElement)) {
+      return
+    }
+
+    if ('undefined' !== typeof Hammer && !this.props.noTouch) {
       this.hammer = new Hammer($carousel)
         .on('swipeleft', this.handleNextSlide)
         .on('swiperight', this.handlePreviousSlide)
@@ -99,14 +104,20 @@ class Carousel extends React.PureComponent<IProps, IState> {
     if (this.props.defaultActiveSlide) {
       this.handleChange(this.props.defaultActiveSlide)
     }
+
+    $carousel.addEventListener('keydown', this.handleKeyDown)
   }
 
   public componentWillUnmount() {
+    const { carousel: $carousel } = this.$nodes
+
     if (null != this.hammer) {
       this.hammer
         .off('swipeleft', this.handleNextSlide)
         .off('swiperight', this.handlePreviousSlide)
     }
+
+    $carousel.removeEventListener('keydown', this.handleKeyDown)
   }
 
   public componentWillReceiveProps(nextProps: IProps) {
@@ -154,6 +165,22 @@ class Carousel extends React.PureComponent<IProps, IState> {
       }
 
       return length > 0 ? id + 1 : 0
+    }
+  }
+
+  private handleKeyDown(event: KeyboardEvent) {
+    switch (event.keyCode) {
+      // ArrowLeft
+      case 0x25: {
+        this.handlePreviousSlide()
+        return
+      }
+
+      // ArrowRight
+      case 0x27: {
+        this.handleNextSlide()
+        return
+      }
     }
   }
 
