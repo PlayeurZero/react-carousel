@@ -28,7 +28,7 @@ describe('<Carousel />', () => {
     expect(wrapper.state().activeSlide).toBe(1)
   })
 
-  it('renders <Carousel /> with no slide', () => {
+  it('renders <Carousel /> with no slides', () => {
     const wrapper = shallow((
       <Carousel>{[]}</Carousel>
     ))

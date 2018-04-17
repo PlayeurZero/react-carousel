@@ -1,4 +1,4 @@
-import { classConcat } from '../'
+import classConcat from '../'
 
 describe('classConcat(...)', () => {
   test('it should return class with a single value', () => {
