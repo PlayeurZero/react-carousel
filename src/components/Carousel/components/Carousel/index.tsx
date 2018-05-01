@@ -66,7 +66,7 @@ class Carousel extends React.PureComponent<IProps, IState> {
       null != props.activeSlide
         ? props.activeSlide
         : props.defaultActiveSlide) % slideCount
-        || 0
+      || 0
 
     this.state = {
       activeSlide: childrenCount > 0 ? activeSlide + 1 : 0,
@@ -82,10 +82,15 @@ class Carousel extends React.PureComponent<IProps, IState> {
     this.handleNextSlide = this.handleNextSlide.bind(this)
     this.handlePreviousSlide = this.handlePreviousSlide.bind(this)
     this.handleKeyDown = this.handleKeyDown.bind(this)
+    this.handlePanMove = this.handlePanMove.bind(this)
+    this.handlePanEnd = this.handlePanEnd.bind(this)
   }
 
   public componentDidMount() {
-    const { carousel: $carousel } = this.$nodes
+    const {
+      carousel: $carousel,
+      carouselWrapper: $carouselWrapper,
+    } = this.$nodes
 
     if (!($carousel instanceof HTMLElement)) {
       return
@@ -95,11 +100,11 @@ class Carousel extends React.PureComponent<IProps, IState> {
       this.hammer = new Hammer($carousel)
         .on('swipeleft', this.handleNextSlide)
         .on('swiperight', this.handlePreviousSlide)
+        .on('panmove', this.handlePanMove)
+        .on('panend', this.handlePanEnd)
     }
 
-    if (this.props.autoplay) {
-      this.runAutoplay()
-    }
+    this.runAutoplay()
 
     if (this.props.defaultActiveSlide) {
       this.handleChange(this.props.defaultActiveSlide)
@@ -131,7 +136,7 @@ class Carousel extends React.PureComponent<IProps, IState> {
   }
 
   private runAutoplay() {
-    if (null != this.autoplay) { return }
+    if (null != this.autoplay || !this.props.autoplay) { return }
 
     this.autoplay = window.setInterval(() => {
       this.handleChange(this.state.activeSlide + 1, false, true)
@@ -142,6 +147,11 @@ class Carousel extends React.PureComponent<IProps, IState> {
     window.clearInterval(this.autoplay)
 
     this.autoplay = null
+  }
+
+  private resetAutoplay() {
+    this.pauseAutoplay()
+    this.runAutoplay()
   }
 
   private getChildrenCount(): number {
@@ -168,6 +178,43 @@ class Carousel extends React.PureComponent<IProps, IState> {
     }
   }
 
+  private handlePanMove(e) {
+    const {
+      carouselWrapper: $carouselWrapper,
+    } = this.$nodes
+
+    this.pauseAutoplay()
+
+    if (this.state.animationShift !== 0) {
+      return
+    }
+
+    $carouselWrapper.style.transitionProperty = 'none'
+    // $carouselWrapper.style.transform = `translate3d(${e.deltaX}px, 0, 0)`
+    $carouselWrapper.style.transform =
+      `translate3d(
+          ${((this.state.animationShift - this.state.activeSlide)
+        + (e.deltaX / $carouselWrapper.clientWidth)) * 100}% , 0, 0)`
+  }
+
+  private handlePanEnd(e) {
+    const {
+      carousel: $carousel,
+      carouselWrapper: $carouselWrapper,
+    } = this.$nodes
+
+    if (Math.abs(e.deltaX) > ($carousel.offsetWidth / 2)) {
+      this.handleChange(this.state.activeSlide + (e.deltaX > 0 ? -1 : 1))
+    }
+
+    $carouselWrapper.style.transitionProperty = null
+    $carouselWrapper.style.transform =
+      `translate3d(
+        ${(this.state.animationShift - this.state.activeSlide) * 100}% , 0, 0)`
+
+    this.runAutoplay()
+  }
+
   private handleKeyDown(event: KeyboardEvent) {
     switch (event.keyCode) {
       // ArrowLeft
@@ -185,10 +232,12 @@ class Carousel extends React.PureComponent<IProps, IState> {
   }
 
   private handleNextSlide() {
+    this.resetAutoplay()
     this.handleChange(this.state.activeSlide + 1)
   }
 
   private handlePreviousSlide() {
+    this.resetAutoplay()
     this.handleChange(this.state.activeSlide - 1)
   }
 
@@ -231,15 +280,21 @@ class Carousel extends React.PureComponent<IProps, IState> {
 
   private handleClickDot(id) {
     return () => {
+      this.resetAutoplay()
+
       this.handleChange(id)
     }
   }
 
   private handleClickArrowLeft() {
+    this.resetAutoplay()
+
     this.handleChange(this.state.activeSlide - 1)
   }
 
   private handleClickArrowRight() {
+    this.resetAutoplay()
+
     this.handleChange(this.state.activeSlide + 1)
   }
 
@@ -338,7 +393,7 @@ class Carousel extends React.PureComponent<IProps, IState> {
           {this.renderDots()}
         </div>
 
-        <div className={classes['carousel-ratio']} style={{ paddingBottom: `${ratio * 100}%` }} />
+        <div className={classes['carousel-ratio']} style={{ paddingBottom: `${ratio * 100} % ` }} />
         <div
           className={classes['carousel-body']}
           ref={($node) => { this.$nodes.carouselBody = $node }}
