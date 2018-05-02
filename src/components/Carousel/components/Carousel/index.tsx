@@ -393,7 +393,7 @@ class Carousel extends React.PureComponent<IProps, IState> {
           {this.renderDots()}
         </div>
 
-        <div className={classes['carousel-ratio']} style={{ paddingBottom: `${ratio * 100} % ` }} />
+        <div className={classes['carousel-ratio']} style={{ paddingBottom: `${ratio * 100}% ` }} />
         <div
           className={classes['carousel-body']}
           ref={($node) => { this.$nodes.carouselBody = $node }}
