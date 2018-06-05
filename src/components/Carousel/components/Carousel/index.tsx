@@ -126,11 +126,22 @@ class Carousel extends React.PureComponent<IProps, IState> {
   }
 
   public componentWillReceiveProps(nextProps: IProps) {
-    if (null != nextProps.activeSlide && nextProps.activeSlide !== this.props.activeSlide) {
+    if (null != nextProps.activeSlide && this.getActiveSlide(nextProps.activeSlide) !== this.state.activeSlide) {
+      if (0 !== this.state.animationShift) {
+        return
+      }
+
+      this.resetAutoplay()
       this.handleChange(this.getActiveSlide(nextProps.activeSlide), true)
     }
 
-    if (null != nextProps.defaultActiveSlide && nextProps.defaultActiveSlide !== this.props.defaultActiveSlide) {
+    if (null != nextProps.defaultActiveSlide &&
+      this.getActiveSlide(nextProps.defaultActiveSlide) !== this.state.activeSlide) {
+      if (0 !== this.state.animationShift) {
+        return
+      }
+
+      this.resetAutoplay()
       this.handleChange(this.getActiveSlide(nextProps.defaultActiveSlide), true)
     }
   }
