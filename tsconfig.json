@@ -9,14 +9,14 @@
 		"strictNullChecks": false
 	},
 	"files": [
-		"../typings/ObjectConstructor.d.ts",
-		"../typings/CSS.d.ts"
+		"./typings/css.d.ts",
+		"./typings/object.d.ts"
 	],
 	"include": [
-		"../src/**/*"
+		"src/**/*"
 	],
 	"exclude": [
-		"../node_modules/**/*",
-		"../**/__tests__/*"
+		"node_modules/**/*",
+		"**/__tests__/*"
 	]
 }

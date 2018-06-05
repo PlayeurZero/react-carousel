@@ -29,7 +29,8 @@ yarn add playeurzero/react-carousel#v1.0.0
 ```tsx
 import * as React from 'react'
 import * as ReactDOM from 'react-dom'
-import * as Carousel from 'react-carousel'
+
+import Carousel from 'react-carousel'
 
 ReactDOM.render(
   (

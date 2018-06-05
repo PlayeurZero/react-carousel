@@ -16,8 +16,8 @@
     "test": "npm run lint && npm run test:jest",
     "test:jest": "jest --config ./config/jest.config.json",
     "lint": "npm run lint:ts",
-    "lint:ts": "tslint --config ./config/tslint.json 'src/**/*.{ts,tsx}'",
-    "fix:ts": "tslint --config ./config/tslint.json 'src/**/*.{ts,tsx}' --fix"
+    "lint:ts": "tslint 'src/**/*.{ts,tsx}'",
+    "fix:ts": "tslint 'src/**/*.{ts,tsx}' --fix"
   },
   "dependencies": {},
   "devDependencies": {
