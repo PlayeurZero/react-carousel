@@ -17,6 +17,7 @@ interface IProps {
   autoplayPauseOnHover?: boolean
   defaultActiveSlide?: number
   activeSlide?: number
+  setActiveSlide?: (() => number)
   renderDot?: (active: boolean) => React.ReactElement<any>
   renderLeftArrow?: () => React.ReactElement<any>
   renderRightArrow?: () => React.ReactElement<any>
@@ -51,7 +52,9 @@ class Carousel extends React.PureComponent<IProps, IState> {
   }
 
   private $nodes: any = {
-    slides: [],
+    carousel: React.createRef(),
+    carouselBody: React.createRef(),
+    carouselWrapper: React.createRef(),
   }
   private autoplay: number
   private hammer: any
@@ -79,8 +82,8 @@ class Carousel extends React.PureComponent<IProps, IState> {
     this.handleClickDot = this.handleClickDot.bind(this)
     this.handleMouseOver = this.handleMouseOver.bind(this)
     this.handleMouseLeave = this.handleMouseLeave.bind(this)
-    this.handleNextSlide = this.handleNextSlide.bind(this)
-    this.handlePreviousSlide = this.handlePreviousSlide.bind(this)
+    this.nextSlide = this.nextSlide.bind(this)
+    this.previousSlide = this.previousSlide.bind(this)
     this.handleKeyDown = this.handleKeyDown.bind(this)
     this.handlePanMove = this.handlePanMove.bind(this)
     this.handlePanEnd = this.handlePanEnd.bind(this)
@@ -89,7 +92,6 @@ class Carousel extends React.PureComponent<IProps, IState> {
   public componentDidMount() {
     const {
       carousel: $carousel,
-      carouselWrapper: $carouselWrapper,
     } = this.$nodes
 
     if (!($carousel instanceof HTMLElement)) {
@@ -98,8 +100,8 @@ class Carousel extends React.PureComponent<IProps, IState> {
 
     if ('undefined' !== typeof Hammer && !this.props.noTouch) {
       this.hammer = new Hammer($carousel)
-        .on('swipeleft', this.handleNextSlide)
-        .on('swiperight', this.handlePreviousSlide)
+        .on('swipeleft', this.nextSlide)
+        .on('swiperight', this.previousSlide)
         .on('panmove', this.handlePanMove)
         .on('panend', this.handlePanEnd)
     }
@@ -118,8 +120,8 @@ class Carousel extends React.PureComponent<IProps, IState> {
 
     if (null != this.hammer) {
       this.hammer
-        .off('swipeleft', this.handleNextSlide)
-        .off('swiperight', this.handlePreviousSlide)
+        .off('swipeleft', this.nextSlide)
+        .off('swiperight', this.previousSlide)
     }
 
     $carousel.removeEventListener('keydown', this.handleKeyDown)
@@ -132,23 +134,92 @@ class Carousel extends React.PureComponent<IProps, IState> {
       }
 
       this.resetAutoplay()
-      this.handleChange(this.getActiveSlide(nextProps.activeSlide), true)
-    } else if (null != nextProps.defaultActiveSlide &&
-      this.getActiveSlide(nextProps.defaultActiveSlide) !== this.state.activeSlide) {
-      if (0 !== this.state.animationShift) {
-        return
-      }
-
-      this.resetAutoplay()
-      this.handleChange(this.getActiveSlide(nextProps.defaultActiveSlide), true)
+      this.handleChange(this.getActiveSlide(nextProps.activeSlide))
     }
+  }
+
+  public nextSlide() {
+    this.resetAutoplay()
+    this.handleChange(this.state.activeSlide + 1)
+  }
+
+  public previousSlide() {
+    this.resetAutoplay()
+    this.handleChange(this.state.activeSlide - 1)
+  }
+
+  public setSlide(id) {
+    this.handleChange(id)
+  }
+
+  public render() {
+    const { transitionDuration, hideArrows, hideDots, ratio, renderLeftArrow, renderRightArrow, children } = this.props
+    const { activeSlide, animationShift } = this.state
+
+    const styles = {
+      carouselWrapper: {
+        transform: `translate3d(${(animationShift - activeSlide) * 100}% , 0, 0)`,
+        transitionDuration: `${transitionDuration}ms`,
+        transitionProperty: animationShift !== 0 ? 'transform' : 'none',
+      },
+    }
+
+    return (
+      <div
+        className={classes['carousel']}
+        ref={($node) => { this.$nodes.carousel = $node }}
+        onMouseOver={this.handleMouseOver}
+        onMouseLeave={this.handleMouseLeave}
+      >
+        <div
+          className={classConcat(
+            classes['carousel-arrows'],
+            { [classes['carousel-arrows--is-hidden']]: hideArrows },
+          )}
+        >
+          {React.cloneElement(renderLeftArrow(), { onClick: this.handleClickArrowLeft })}
+          {React.cloneElement(renderRightArrow(), { onClick: this.handleClickArrowRight })}
+        </div>
+
+        <div
+          className={classConcat(
+            classes['carousel-dots'],
+            { [classes['carousel-dots--is-hidden']]: hideDots },
+          )}
+        >
+          {this.renderDots()}
+        </div>
+
+        <div className={classes['carousel-ratio']} style={{ paddingBottom: `${ratio * 100}% ` }} />
+        <div
+          className={classes['carousel-body']}
+          ref={this.$nodes.carouselBody}
+        >
+          <div
+            style={styles.carouselWrapper}
+            className={classes['carousel-wrapper']}
+            ref={this.$nodes.carouselWrapper}
+          >
+            {this.renderFirstSlide()}
+            {
+              React.Children.map(
+                children,
+                (child, index) =>
+                  React.cloneElement(child as React.ReactElement<any>, { key: index }),
+              )
+            }
+            {this.renderLastSlide()}
+          </div>
+        </div>
+      </div>
+    )
   }
 
   private runAutoplay() {
     if (null != this.autoplay || !this.props.autoplay) { return }
 
     this.autoplay = window.setInterval(() => {
-      this.handleChange(this.state.activeSlide + 1, false, true)
+      this.handleChange(this.state.activeSlide + 1, true)
     }, this.props.autoplayDuration + this.props.transitionDuration)
   }
 
@@ -228,29 +299,19 @@ class Carousel extends React.PureComponent<IProps, IState> {
     switch (event.keyCode) {
       // ArrowLeft
       case 0x25: {
-        this.handlePreviousSlide()
+        this.previousSlide()
         return
       }
 
       // ArrowRight
       case 0x27: {
-        this.handleNextSlide()
+        this.nextSlide()
         return
       }
     }
   }
 
-  private handleNextSlide() {
-    this.resetAutoplay()
-    this.handleChange(this.state.activeSlide + 1)
-  }
-
-  private handlePreviousSlide() {
-    this.resetAutoplay()
-    this.handleChange(this.state.activeSlide - 1)
-  }
-
-  private handleChange(id, force = false, fromAutoplay = false) {
+  private handleChange(id, fromAutoplay = false) {
     const slideCount = this.getSlideCount()
     let activeSlide = (id + slideCount) % slideCount
 
@@ -270,10 +331,6 @@ class Carousel extends React.PureComponent<IProps, IState> {
 
     if (activeSlide === slideCount - 1) {
       activeSlide = 1
-    }
-
-    if (null != this.props.activeSlide && !force) {
-      return
     }
 
     this.setState({ animationShift }, () => {
@@ -333,7 +390,7 @@ class Carousel extends React.PureComponent<IProps, IState> {
   }
 
   private renderLastSlide() {
-    const { transitionDuration, children } = this.props
+    const { children } = this.props
 
     const childrenCount = this.getChildrenCount()
 
@@ -346,7 +403,7 @@ class Carousel extends React.PureComponent<IProps, IState> {
   }
 
   private renderDots() {
-    const { renderDot, children } = this.props
+    const { renderDot } = this.props
     const { activeSlide, animationShift } = this.state
 
     const childrenCount = this.getChildrenCount()
@@ -362,69 +419,6 @@ class Carousel extends React.PureComponent<IProps, IState> {
         ),
       )
     }
-  }
-
-  public render() {
-    const { transitionDuration, hideArrows, hideDots, ratio, renderLeftArrow, renderRightArrow, children } = this.props
-    const { activeSlide, animationShift } = this.state
-
-    const styles = {
-      $carouselWrapper: {
-        transform: `translate3d(${(animationShift - activeSlide) * 100}% , 0, 0)`,
-        transitionDuration: `${transitionDuration}ms`,
-        transitionProperty: animationShift !== 0 ? 'transform' : 'none',
-      },
-    }
-
-    return (
-      <div
-        className={classes['carousel']}
-        ref={($node) => { this.$nodes.carousel = $node }}
-        onMouseOver={this.handleMouseOver}
-        onMouseLeave={this.handleMouseLeave}
-      >
-        <div
-          className={classConcat(
-            classes['carousel-arrows'],
-            { [classes['carousel-arrows--is-hidden']]: hideArrows },
-          )}
-        >
-          {React.cloneElement(renderLeftArrow(), { onClick: this.handleClickArrowLeft })}
-          {React.cloneElement(renderRightArrow(), { onClick: this.handleClickArrowRight })}
-        </div>
-
-        <div
-          className={classConcat(
-            classes['carousel-dots'],
-            { [classes['carousel-dots--is-hidden']]: hideDots },
-          )}
-        >
-          {this.renderDots()}
-        </div>
-
-        <div className={classes['carousel-ratio']} style={{ paddingBottom: `${ratio * 100}% ` }} />
-        <div
-          className={classes['carousel-body']}
-          ref={($node) => { this.$nodes.carouselBody = $node }}
-        >
-          <div
-            style={styles.$carouselWrapper}
-            className={classes['carousel-wrapper']}
-            ref={($node) => { this.$nodes.carouselWrapper = $node }}
-          >
-            {this.renderFirstSlide()}
-            {
-              React.Children.map(
-                children,
-                (child, index) =>
-                  React.cloneElement(child as React.ReactElement<any>, { key: index }),
-              )
-            }
-            {this.renderLastSlide()}
-          </div>
-        </div>
-      </div>
-    )
   }
 }
 

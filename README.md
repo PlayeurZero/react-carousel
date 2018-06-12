@@ -122,7 +122,6 @@ Prevent the carousel from swiping when it is hovered.
 
 Defines the default active slide.
 Using this props will no leed to a controlled value. It justs define the default value for startup.
-Changing this prop will update the carousel active slide.
 
 If you want to control which slide is active, use `activeSlide` prop instead.
 
