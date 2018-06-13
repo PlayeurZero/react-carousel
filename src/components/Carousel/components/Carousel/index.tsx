@@ -149,7 +149,7 @@ class Carousel extends React.PureComponent<IProps, IState> {
   }
 
   public setSlide(id) {
-    this.handleChange(id)
+    this.handleChange(this.getActiveSlide(id))
   }
 
   public render() {

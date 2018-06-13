@@ -48,6 +48,7 @@ ReactDOM.render(
 ```jsx
 import React from 'react'
 import ReactDOM from 'react-dom'
+
 import Carousel from 'react-carousel'
 
 ReactDOM.render(
