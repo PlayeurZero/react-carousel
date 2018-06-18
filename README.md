@@ -98,6 +98,14 @@ By default: 16:9.
 Disable touch detection (no events will be created).
 Be careful, passing this props from `true` to `false` will no disable touch events.
 
+#### noMouse
+
+`boolean?` = `false`
+
+Disable mouse touch detection (no events will be created).
+Be careful, passing this props from `true` to `false` will no disable mouse touch events.
+Mouse touch events allows user to move a slide using the mouse cursor.
+
 #### autoplay
 
 `boolean?` = `false`

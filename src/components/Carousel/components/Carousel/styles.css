@@ -44,14 +44,12 @@
 
   .carousel-dots {
     position: absolute;
-    left: 50%;
     z-index: 3;
+    text-align: center;
 
+    left: 0;
+    right: 0;
     bottom: 8px;
-
-    margin: 0 auto;
-
-    transform: translate3d(-50%, 0, 0);
   }
 
   .carousel-dots--is-hidden {

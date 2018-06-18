@@ -12,6 +12,7 @@ interface IProps {
   hideDots?: boolean
   ratio?: number
   noTouch?: boolean
+  noMouse?: boolean
   autoplay?: boolean
   autoplayDuration?: number
   autoplayPauseOnHover?: boolean
@@ -37,6 +38,7 @@ class Carousel extends React.PureComponent<IProps, IState> {
     hideDots: false,
     ratio: .5625,
     noTouch: false,
+    noMouse: false,
     autoplay: false,
     autoplayDuration: 3000,
     autoplayPauseOnHover: true,
@@ -58,21 +60,14 @@ class Carousel extends React.PureComponent<IProps, IState> {
   }
   private autoplay: number
   private hammer: any
+  private isHoldingClick: boolean = false
+  private initialDeltaX: number = null
 
   constructor(props: IProps) {
     super(props)
 
-    const childrenCount = React.Children.toArray(this.props.children).length
-    const slideCount = childrenCount > 0 ? childrenCount + 2 : 0
-
-    const activeSlide = (
-      null != props.activeSlide
-        ? props.activeSlide
-        : props.defaultActiveSlide) % slideCount
-      || 0
-
     this.state = {
-      activeSlide: childrenCount > 0 ? activeSlide + 1 : 0,
+      activeSlide: props.defaultActiveSlide,
       animationShift: 0,
     }
 
@@ -87,6 +82,10 @@ class Carousel extends React.PureComponent<IProps, IState> {
     this.handleKeyDown = this.handleKeyDown.bind(this)
     this.handlePanMove = this.handlePanMove.bind(this)
     this.handlePanEnd = this.handlePanEnd.bind(this)
+    this.handleMouseUp = this.handleMouseUp.bind(this)
+    this.handleMouseDown = this.handleMouseDown.bind(this)
+    this.handleDragStart = this.handleDragStart.bind(this)
+    this.handleMouseMove = this.handleMouseMove.bind(this)
   }
 
   public componentDidMount() {
@@ -94,25 +93,29 @@ class Carousel extends React.PureComponent<IProps, IState> {
       carousel: $carousel,
     } = this.$nodes
 
-    if (!($carousel instanceof HTMLElement)) {
+    if (!($carousel.current instanceof HTMLElement)) {
       return
     }
 
+    /**
+     * if the optional dependency Hammer.js exists, defines touch events
+     */
     if ('undefined' !== typeof Hammer && !this.props.noTouch) {
-      this.hammer = new Hammer($carousel)
+      this.hammer = new Hammer($carousel.current)
         .on('swipeleft', this.nextSlide)
         .on('swiperight', this.previousSlide)
         .on('panmove', this.handlePanMove)
         .on('panend', this.handlePanEnd)
     }
 
-    this.runAutoplay()
-
-    if (this.props.defaultActiveSlide) {
-      this.handleChange(this.props.defaultActiveSlide)
+    if (!this.props.noMouse) {
+      window.addEventListener('mouseup', this.handleMouseUp)
+      window.addEventListener('dragstart', this.handleDragStart)
+      window.addEventListener('mousemove', this.handleMouseMove)
+      $carousel.current.addEventListener('keydown', this.handleKeyDown)
     }
 
-    $carousel.addEventListener('keydown', this.handleKeyDown)
+    this.runAutoplay()
   }
 
   public componentWillUnmount() {
@@ -122,43 +125,58 @@ class Carousel extends React.PureComponent<IProps, IState> {
       this.hammer
         .off('swipeleft', this.nextSlide)
         .off('swiperight', this.previousSlide)
+        .off('panmove', this.handlePanMove)
+        .off('panend', this.handlePanEnd)
     }
 
-    $carousel.removeEventListener('keydown', this.handleKeyDown)
+    $carousel.current.removeEventListener('keydown', this.handleKeyDown)
+    window.removeEventListener('dragstart', this.handleDragStart)
+    window.removeEventListener('mouseup', this.handleMouseUp)
   }
 
   public componentWillReceiveProps(nextProps: IProps) {
-    if (null != nextProps.activeSlide && this.getActiveSlide(nextProps.activeSlide) !== this.state.activeSlide) {
+    if (null != nextProps.activeSlide && nextProps.activeSlide !== this.state.activeSlide) {
       if (0 !== this.state.animationShift) {
         return
       }
 
       this.resetAutoplay()
-      this.handleChange(this.getActiveSlide(nextProps.activeSlide))
+      this.setSlide(nextProps.activeSlide, true)
+    }
+
+    const newChildrenCount = React.Children.count(nextProps.children)
+    // if the number of child has changed
+    if (newChildrenCount !== this.getChildrenCount()) {
+      if (this.state.activeSlide > (newChildrenCount - 1)) {
+        this.setState((state) => ({ activeSlide: state.activeSlide - 1 }))
+      }
     }
   }
 
-  public nextSlide() {
-    this.resetAutoplay()
-    this.handleChange(this.state.activeSlide + 1)
+  public nextSlide(force?, fromAutoplay?) {
+    this.setSlide(this.state.activeSlide + 1, force, fromAutoplay)
   }
 
-  public previousSlide() {
-    this.resetAutoplay()
-    this.handleChange(this.state.activeSlide - 1)
+  public previousSlide(force?, fromAutoplay?) {
+    this.setSlide(this.state.activeSlide - 1, force, fromAutoplay)
   }
 
-  public setSlide(id) {
-    this.handleChange(this.getActiveSlide(id))
+  public setSlide(id, force?, fromAutoplay = false) {
+    this.handleChange(id, force)
+
+    if (!fromAutoplay) {
+      this.resetAutoplay()
+    }
   }
 
   public render() {
     const { transitionDuration, hideArrows, hideDots, ratio, renderLeftArrow, renderRightArrow, children } = this.props
     const { activeSlide, animationShift } = this.state
+    const childrenCount = this.getChildrenCount()
 
     const styles = {
       carouselWrapper: {
-        transform: `translate3d(${(animationShift - activeSlide) * 100}% , 0, 0)`,
+        transform: `translate3d(${(animationShift - activeSlide - (childrenCount > 0 ? 1 : 0)) * 100}% , 0, 0)`,
         transitionDuration: `${transitionDuration}ms`,
         transitionProperty: animationShift !== 0 ? 'transform' : 'none',
       },
@@ -167,9 +185,10 @@ class Carousel extends React.PureComponent<IProps, IState> {
     return (
       <div
         className={classes['carousel']}
-        ref={($node) => { this.$nodes.carousel = $node }}
+        ref={this.$nodes.carousel}
         onMouseOver={this.handleMouseOver}
         onMouseLeave={this.handleMouseLeave}
+        {...(!this.props.noMouse ? { onMouseDown: this.handleMouseDown } : undefined)}
       >
         <div
           className={classConcat(
@@ -215,11 +234,54 @@ class Carousel extends React.PureComponent<IProps, IState> {
     )
   }
 
+  private renderFirstSlide() {
+    const childrenCount = this.getChildrenCount()
+
+    if (childrenCount > 0) {
+      return React.cloneElement(
+        React.Children.toArray(this.props.children)[childrenCount - 1] as React.ReactElement<any>,
+        { key: 'carousel__firstSlide' },
+      )
+    }
+  }
+
+  private renderLastSlide() {
+    const childrenCount = this.getChildrenCount()
+
+    if (childrenCount > 0) {
+      return React.cloneElement(
+        React.Children.toArray(this.props.children)[0] as React.ReactElement<any>,
+        { key: 'carousel__lastSlide' },
+      )
+    }
+  }
+
+  private renderDots() {
+    const { renderDot } = this.props
+    const { activeSlide, animationShift } = this.state
+
+    const childrenCount = this.getChildrenCount()
+
+    if (childrenCount > 0) {
+      return Array.apply(null, Array(this.getChildrenCount()))
+        .fill(null)
+        .map(($null, index) => (
+          React.cloneElement(
+            renderDot(activeSlide - animationShift === index),
+            { onClick: this.handleClickDot(index), key: index },
+          )
+        ),
+      )
+    }
+  }
+
   private runAutoplay() {
-    if (null != this.autoplay || !this.props.autoplay) { return }
+    if (null != this.autoplay || !this.props.autoplay) {
+      return
+    }
 
     this.autoplay = window.setInterval(() => {
-      this.handleChange(this.state.activeSlide + 1, true)
+      this.nextSlide(false, true)
     }, this.props.autoplayDuration + this.props.transitionDuration)
   }
 
@@ -235,27 +297,73 @@ class Carousel extends React.PureComponent<IProps, IState> {
   }
 
   private getChildrenCount(): number {
-    return React.Children.toArray(this.props.children).length
+    return React.Children.count(this.props.children)
   }
 
-  private getSlideCount(): number {
-    const length = this.getChildrenCount()
-
-    return length > 0 ? length + 2 : 0
+  private handleMouseDown(e) {
+    this.isHoldingClick = true
+    this.initialDeltaX = e.clientX
   }
 
-  private getActiveSlide(id, includesFakeSlides: boolean = false) {
-    const length = this.getChildrenCount()
+  private handleMouseUp(e) {
+    const {
+      carousel: $carousel,
+      carouselWrapper: $carouselWrapper,
+    } = this.$nodes
 
-    if (includesFakeSlides) {
-      return length > 0 ? id - 1 : 0
-    } else {
-      if (id > (length - 1) || id < 0) {
-        throw new RangeError('`activeSlide` must be between 0 and the slide count.')
+    this.isHoldingClick = false
+    const diff = e.clientX - this.initialDeltaX
+
+    if (Math.abs(diff) > ($carousel.current.offsetWidth / 2)) {
+      this.handleChange(this.state.activeSlide + (diff > 0 ? -1 : 1))
+    }
+
+    $carouselWrapper.current.style.transitionProperty = null
+    $carouselWrapper.current.style.transform =
+      `translate3d(
+        ${(this.state.animationShift - this.state.activeSlide - 1) * 100}% , 0, 0)`
+
+    this.runAutoplay()
+  }
+
+  private handleMouseOver() {
+    if (this.props.autoplayPauseOnHover && this.props.autoplay) {
+      this.pauseAutoplay()
+    }
+  }
+
+  private handleMouseMove(e) {
+    if (!this.props.noMouse && this.isHoldingClick) {
+      if (this.state.animationShift !== 0) {
+        return
       }
 
-      return length > 0 ? id + 1 : 0
+      const {
+        carouselWrapper: $carouselWrapper,
+      } = this.$nodes
+
+      const diff = e.clientX - this.initialDeltaX
+
+      $carouselWrapper.current.style.transitionProperty = 'none'
+      $carouselWrapper.current.style.transform =
+      `translate3d(
+          ${((this.state.animationShift - this.state.activeSlide - 1)
+        + (diff / $carouselWrapper.current.clientWidth)) * 100}% , 0, 0)`
     }
+  }
+
+  private handleDragStart(e) {
+    if (this.isHoldingClick) {
+      e.preventDefault()
+    }
+  }
+
+  private handleMouseLeave() {
+    if (!(this.props.autoplayPauseOnHover && this.props.autoplay)) {
+      return
+    }
+
+    this.runAutoplay()
   }
 
   private handlePanMove(e) {
@@ -269,12 +377,11 @@ class Carousel extends React.PureComponent<IProps, IState> {
       return
     }
 
-    $carouselWrapper.style.transitionProperty = 'none'
-    // $carouselWrapper.style.transform = `translate3d(${e.deltaX}px, 0, 0)`
-    $carouselWrapper.style.transform =
+    $carouselWrapper.current.style.transitionProperty = 'none'
+    $carouselWrapper.current.style.transform =
       `translate3d(
-          ${((this.state.animationShift - this.state.activeSlide)
-        + (e.deltaX / $carouselWrapper.clientWidth)) * 100}% , 0, 0)`
+          ${((this.state.animationShift - this.state.activeSlide - 1)
+        + (e.deltaX / $carouselWrapper.current.clientWidth)) * 100}% , 0, 0)`
   }
 
   private handlePanEnd(e) {
@@ -283,14 +390,14 @@ class Carousel extends React.PureComponent<IProps, IState> {
       carouselWrapper: $carouselWrapper,
     } = this.$nodes
 
-    if (Math.abs(e.deltaX) > ($carousel.offsetWidth / 2)) {
+    if (Math.abs(e.deltaX) > ($carousel.current.offsetWidth / 2)) {
       this.handleChange(this.state.activeSlide + (e.deltaX > 0 ? -1 : 1))
     }
 
-    $carouselWrapper.style.transitionProperty = null
-    $carouselWrapper.style.transform =
+    $carouselWrapper.current.style.transitionProperty = null
+    $carouselWrapper.current.style.transform =
       `translate3d(
-        ${(this.state.animationShift - this.state.activeSlide) * 100}% , 0, 0)`
+        ${(this.state.animationShift - this.state.activeSlide - 1) * 100}% , 0, 0)`
 
     this.runAutoplay()
   }
@@ -311,36 +418,43 @@ class Carousel extends React.PureComponent<IProps, IState> {
     }
   }
 
-  private handleChange(id, fromAutoplay = false) {
-    const slideCount = this.getSlideCount()
-    let activeSlide = (id + slideCount) % slideCount
+  private handleChange(id, force = false) {
+    const childrenCount = this.getChildrenCount()
+    let activeSlide = id
 
-    const animationShift = this.state.activeSlide - activeSlide
+    let animationShift = this.state.activeSlide - activeSlide
+    if (activeSlide === -1) {
+      animationShift = 1
+    } else if (childrenCount === activeSlide) {
+      animationShift = -1
+    }
+
+    activeSlide = (activeSlide + childrenCount) % childrenCount
 
     if (this.state.animationShift !== 0 || animationShift === 0) {
       return
     }
 
-    if (!(fromAutoplay && null != this.props.activeSlide)) {
-      this.props.onSlideChange(this.getActiveSlide(activeSlide, true))
+    if (id > childrenCount) {
+      // tslint:disable-next-line
+      console.warn('[react-carousel] try to open inexisting slide (slide n°' + id + ')')
+      return
     }
 
-    if (activeSlide === 0) {
-      activeSlide = slideCount - 2
-    }
+    this.props.onSlideChange(activeSlide)
 
-    if (activeSlide === slideCount - 1) {
-      activeSlide = 1
+    if (null != this.props.activeSlide && !force) {
+      return
     }
 
     this.setState({ animationShift }, () => {
       const callback = delayFallback(() => {
-        (this.$nodes.carousel as HTMLElement).removeEventListener('transitionEnd', callback)
+        (this.$nodes.carousel.current as HTMLElement).removeEventListener('transitionEnd', callback)
 
         this.setState({ animationShift: 0, activeSlide })
       }, this.props.transitionDuration) as () => {}
 
-      (this.$nodes.carousel as HTMLElement).addEventListener('transitionEnd', callback)
+      (this.$nodes.carousel.current as HTMLElement).addEventListener('transitionEnd', callback)
     })
   }
 
@@ -348,77 +462,16 @@ class Carousel extends React.PureComponent<IProps, IState> {
     return () => {
       this.resetAutoplay()
 
-      this.handleChange(id)
+      this.setSlide(id)
     }
   }
 
   private handleClickArrowLeft() {
-    this.resetAutoplay()
-
-    this.handleChange(this.state.activeSlide - 1)
+    this.previousSlide()
   }
 
   private handleClickArrowRight() {
-    this.resetAutoplay()
-
-    this.handleChange(this.state.activeSlide + 1)
-  }
-
-  private handleMouseOver() {
-    if (!(this.props.autoplayPauseOnHover && this.props.autoplay)) { return }
-
-    this.pauseAutoplay()
-  }
-
-  private handleMouseLeave() {
-    if (!(this.props.autoplayPauseOnHover && this.props.autoplay)) { return }
-
-    this.runAutoplay()
-  }
-
-  private renderFirstSlide() {
-    const { transitionDuration, children } = this.props
-
-    const childrenCount = this.getChildrenCount()
-
-    if (childrenCount > 0) {
-      return React.cloneElement(
-        React.Children.toArray(children)[childrenCount - 1] as React.ReactElement<any>,
-        { key: 'carousel__firstSlide' },
-      )
-    }
-  }
-
-  private renderLastSlide() {
-    const { children } = this.props
-
-    const childrenCount = this.getChildrenCount()
-
-    if (childrenCount > 0) {
-      return React.cloneElement(
-        React.Children.toArray(children)[0] as React.ReactElement<any>,
-        { key: 'carousel__lastSlide' },
-      )
-    }
-  }
-
-  private renderDots() {
-    const { renderDot } = this.props
-    const { activeSlide, animationShift } = this.state
-
-    const childrenCount = this.getChildrenCount()
-
-    if (childrenCount > 0) {
-      return Array.apply(null, Array(this.getSlideCount() - 2))
-        .fill(null)
-        .map(($null, index) => (
-          React.cloneElement(
-            renderDot(activeSlide - animationShift === index + 1),
-            { onClick: this.handleClickDot(index + 1), key: index },
-          )
-        ),
-      )
-    }
+    this.nextSlide()
   }
 }
 
