@@ -25,14 +25,6 @@ describe('<Carousel />', () => {
       </Carousel>
     ))
 
-    expect(wrapper.state().activeSlide).toBe(1)
-  })
-
-  it('renders <Carousel /> with no slides', () => {
-    const wrapper = shallow((
-      <Carousel>{[]}</Carousel>
-    ))
-
     expect(wrapper.state().activeSlide).toBe(0)
   })
 
@@ -45,6 +37,6 @@ describe('<Carousel />', () => {
       </Carousel>
     ))
 
-    expect(wrapper.state().activeSlide).toBe(1)
+    expect(wrapper.state().activeSlide).toBe(0)
   })
 })
