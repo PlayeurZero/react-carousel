@@ -303,27 +303,31 @@ class Carousel extends React.PureComponent<IProps, IState> {
   private handleMouseDown(e) {
     this.isHoldingClick = true
     this.initialDeltaX = e.clientX
+
+    this.pauseAutoplay()
   }
 
   private handleMouseUp(e) {
-    const {
-      carousel: $carousel,
-      carouselWrapper: $carouselWrapper,
-    } = this.$nodes
+    if (this.isHoldingClick) {
+      const {
+        carousel: $carousel,
+        carouselWrapper: $carouselWrapper,
+      } = this.$nodes
 
-    this.isHoldingClick = false
-    const diff = e.clientX - this.initialDeltaX
+      this.isHoldingClick = false
+      const diff = e.clientX - this.initialDeltaX
 
-    if (Math.abs(diff) > ($carousel.current.offsetWidth / 2)) {
-      this.handleChange(this.state.activeSlide + (diff > 0 ? -1 : 1))
+      if (Math.abs(diff) > ($carousel.current.offsetWidth / 2)) {
+        this.handleChange(this.state.activeSlide + (diff > 0 ? -1 : 1))
+      }
+
+      $carouselWrapper.current.style.transitionProperty = null
+      $carouselWrapper.current.style.transform =
+        `translate3d(
+          ${(this.state.animationShift - this.state.activeSlide - 1) * 100}% , 0, 0)`
+
+      this.runAutoplay()
     }
-
-    $carouselWrapper.current.style.transitionProperty = null
-    $carouselWrapper.current.style.transform =
-      `translate3d(
-        ${(this.state.animationShift - this.state.activeSlide - 1) * 100}% , 0, 0)`
-
-    this.runAutoplay()
   }
 
   private handleMouseOver() {
@@ -359,7 +363,7 @@ class Carousel extends React.PureComponent<IProps, IState> {
   }
 
   private handleMouseLeave() {
-    if (!(this.props.autoplayPauseOnHover && this.props.autoplay)) {
+    if (!(this.props.autoplayPauseOnHover && this.props.autoplay) || this.isHoldingClick) {
       return
     }
 
