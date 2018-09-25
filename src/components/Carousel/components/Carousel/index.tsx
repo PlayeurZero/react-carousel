@@ -281,7 +281,9 @@ class Carousel extends React.PureComponent<IProps, IState> {
     }
 
     this.autoplay = window.setInterval(() => {
-      this.nextSlide(false, true)
+      if (this.getChildrenCount() > 1) {
+        this.nextSlide(false, true)
+      }
     }, this.props.autoplayDuration + this.props.transitionDuration)
   }
 
