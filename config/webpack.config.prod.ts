@@ -4,16 +4,41 @@ import * as CleanWebpackPlugin from 'clean-webpack-plugin'
 import * as UglifyJsPlugin from 'uglifyjs-webpack-plugin'
 import * as BundleAnalyzerPlugin from 'webpack-bundle-analyzer'
 
-import config, { PROJECT_DIRECTORY, SRC_DIRECTORY, DIST_DIRECTORY } from './webpack.config.base'
+import baseConfig, { PROJECT_NAME, PROJECT_DIRECTORY, DIST_DIRECTORY } from './webpack.config.base'
 
 const prodConfig = (env): webpack.Configuration => {
-  const tmpConfig = config(env)
+  const config = baseConfig(env)
 
-  tmpConfig.devtool = void 0
+  config.devtool = undefined
 
-  if (!tmpConfig.plugins) { tmpConfig.plugins = [] }
+  config.module.rules.push({
+    test: /\.css$/,
+    use: [
+      'style-loader',
+      {
+        loader: 'css-loader',
+        options: {
+          modules: true,
+          importLoaders: 1,
+          camelCase: false,
+          minimize: true,
+          localIdentName: `${PROJECT_NAME}__[local]__[sha1:hash:8]`,
+        },
+      },
+      {
+        loader: 'postcss-loader',
+        options: {
+          config: {
+            path: path.resolve(PROJECT_DIRECTORY, 'config', 'postcss.config.js'),
+          },
+        },
+      },
+    ],
+  })
 
-  tmpConfig.plugins.push(
+  if (!config.plugins) { config.plugins = [] }
+
+  config.plugins.push(
     new CleanWebpackPlugin(
       [path.parse(DIST_DIRECTORY).name],
       {
@@ -33,7 +58,7 @@ const prodConfig = (env): webpack.Configuration => {
     }),
   )
 
-  return tmpConfig
+  return config
 }
 
 export { prodConfig as default }

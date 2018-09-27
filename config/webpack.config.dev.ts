@@ -1,25 +1,49 @@
 import * as path from 'path'
 import * as webpack from 'webpack'
 
-import config, { PROJECT_DIRECTORY, SRC_DIRECTORY, DIST_DIRECTORY } from './webpack.config.base'
+import baseConfig, { PROJECT_NAME, PROJECT_DIRECTORY, DIST_DIRECTORY } from './webpack.config.base'
 
 const devConfig = (env): webpack.Configuration => {
-  const tmpConfig = config(env)
+  const tmpConfig = baseConfig(env)
 
-  tmpConfig.devtool = 'eval-source-map'
+  config.devtool = 'eval-source-map'
 
-  tmpConfig.devServer = {
+  config.module.rules.push({
+    test: /\.css$/,
+    use: [
+      'style-loader',
+      {
+        loader: 'css-loader',
+        options: {
+          modules: true,
+          importLoaders: 1,
+          camelCase: false,
+          localIdentName: `${PROJECT_NAME}__[local]`,
+        },
+      },
+      {
+        loader: 'postcss-loader',
+        options: {
+          config: {
+            path: path.resolve(PROJECT_DIRECTORY, 'config', 'postcss.config.js'),
+          },
+        },
+      },
+    ],
+  })
+
+  config.devServer = {
     contentBase: DIST_DIRECTORY,
     https: false,
   }
 
-  if (!tmpConfig.plugins) { tmpConfig.plugins = [] }
+  if (!config.plugins) { config.plugins = [] }
 
-  tmpConfig.plugins.push(
+  config.plugins.push(
     new webpack.HotModuleReplacementPlugin(),
   )
 
-  return tmpConfig
+  return config
 }
 
 export { devConfig as default }

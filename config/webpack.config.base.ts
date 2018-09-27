@@ -47,29 +47,6 @@ const config = (env): webpack.Configuration => ({
         exclude: /node_modules/,
       },
       {
-        test: /\.css$/,
-        use: [
-          'style-loader',
-          {
-            loader: 'css-loader',
-            options: {
-              modules: true,
-              importLoaders: 1,
-              camelCase: false,
-              localIdentName: `${PROJECT_NAME}__[local]`,
-            },
-          },
-          {
-            loader: 'postcss-loader',
-            options: {
-              config: {
-                path: path.resolve(PROJECT_DIRECTORY, 'config', 'postcss.config.js'),
-              },
-            },
-          },
-        ],
-      },
-      {
         test: /\.(otf|eot|ttf|woff|woff2|png|gif|jpg|svg)$/,
         use: [
           {
