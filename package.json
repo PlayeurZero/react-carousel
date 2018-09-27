@@ -18,8 +18,8 @@
     "lint": "npm run lint:ts",
     "lint:ts": "tslint 'src/**/*.{ts,tsx}'",
     "fix:ts": "tslint 'src/**/*.{ts,tsx}' --fix",
-    "storybook": "start-storybook -p 6006",
-    "build-storybook": "build-storybook"
+    "storybook:run": "start-storybook -c ./config/.storybook -p 8000",
+    "storybook:build": "build-storybook -c ./config/.storybook"
   },
   "dependencies": {},
   "devDependencies": {
