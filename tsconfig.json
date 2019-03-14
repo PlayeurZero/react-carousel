@@ -9,7 +9,7 @@
 		"strictNullChecks": false
 	},
 	"files": [
-		"./typings/css.d.ts",
+		"./typings/CSS.d.ts",
 		"./typings/object.d.ts"
 	],
 	"include": [

@@ -7,7 +7,7 @@
 // to "React Create App". This only has babel loader to load JavaScript.
 
 const path = require('path')
-const PROJECT_DIRECTORY = path.resolve(__dirname, '..')
+const PROJECT_DIRECTORY = path.resolve(__dirname, '..', '..')
 
 module.exports = {
   plugins: [

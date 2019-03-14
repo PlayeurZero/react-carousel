@@ -4,7 +4,7 @@ import * as webpack from 'webpack'
 import baseConfig, { PROJECT_NAME, PROJECT_DIRECTORY, DIST_DIRECTORY } from './webpack.config.base'
 
 const devConfig = (env): webpack.Configuration => {
-  const tmpConfig = baseConfig(env)
+  const config = baseConfig(env)
 
   config.devtool = 'eval-source-map'
 
