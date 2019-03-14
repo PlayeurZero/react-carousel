@@ -238,8 +238,20 @@ class Carousel extends React.PureComponent<IProps, IState> {
     const childrenCount = this.getChildrenCount()
 
     if (childrenCount > 0) {
+      const child = React.Children.toArray(this.props.children)[childrenCount - 1] as React.ReactElement<any>
+
+      if ('function' === typeof child.props.renderFirstSlide) {
+        return (
+          React.cloneElement(
+            child,
+            { key: 'carousel__firstSlide' },
+            child.props.renderLastSlide.call(),
+          )
+        )
+      }
+
       return React.cloneElement(
-        React.Children.toArray(this.props.children)[childrenCount - 1] as React.ReactElement<any>,
+        child,
         { key: 'carousel__firstSlide' },
       )
     }
@@ -249,8 +261,18 @@ class Carousel extends React.PureComponent<IProps, IState> {
     const childrenCount = this.getChildrenCount()
 
     if (childrenCount > 0) {
+      const child = React.Children.toArray(this.props.children)[0] as React.ReactElement<any>
+
+      if ('function' === typeof child.props.renderLastSlide) {
+        return React.cloneElement(
+          child,
+          { key: 'carousel__lastSlide' },
+          child.props.renderLastSlide.call(),
+        )
+      }
+
       return React.cloneElement(
-        React.Children.toArray(this.props.children)[0] as React.ReactElement<any>,
+        child,
         { key: 'carousel__lastSlide' },
       )
     }
@@ -265,7 +287,7 @@ class Carousel extends React.PureComponent<IProps, IState> {
     if (childrenCount > 0) {
       return Array.apply(null, Array(this.getChildrenCount()))
         .fill(null)
-        .map(($null, index) => (
+        .map((_, index) => (
           React.cloneElement(
             renderDot(activeSlide - animationShift === index),
             { onClick: this.handleClickDot(index), key: index },

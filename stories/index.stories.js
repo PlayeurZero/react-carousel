@@ -179,3 +179,26 @@ storiesOf('Carousel', module)
       <A />
     )
   })
+  .add('custom first slide and last slide (prevent video autoplay duplication)', () => {
+    const A = class extends React.Component {
+      render() {
+        return (
+          <Fragment>
+            <div style={{ width: 800, height: 600 }}>
+              <Carousel>
+                {Array(5).fill(null).map((_, index) => (
+                  <Carousel.Slide key={index} renderFirstSlide={() => "FIRST"} renderLastSlide={() => "LAST"}>
+                    <img src={`https://picsum.photos/800/600?image=${index}`} />
+                  </Carousel.Slide>
+                ))}
+              </Carousel>
+            </div>
+          </Fragment>
+        )
+      }
+    }
+
+    return (
+      <A />
+    )
+  })

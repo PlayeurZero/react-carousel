@@ -176,6 +176,20 @@ It is also fired when autoplay.
 
 ### \<Carousel.Slide> props
 
+#### renderFirstSlide
+
+`(() => React.ReactNode)?`
+
+Replace the first "transition" slide at the end of the infinite carousel.
+It avoids DOM duplication in case where you want to play a video with an "autoplay" option.
+
+#### renderLastSlide
+
+`(() => React.ReactNode)?`
+
+Replace the last "transition" slide at the end of the infinite carousel.
+It avoids DOM duplication in case where you want to play a video with an "autoplay" option.
+
 #### children
 
 `React.ReactNode`
